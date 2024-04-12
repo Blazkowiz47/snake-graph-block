@@ -1,4 +1,3 @@
-from typing import Optional
 import torch
 from torch.nn import (
     GELU,
@@ -41,17 +40,15 @@ class TransformerEncoder(Module):
         return x
 
 
-class VITBackbone(Module):
-    def __init__(
-        self,
-        patch_size: int = 32,
-        encoder_blocks: int = 5,
-    ) -> None:
+class Model(Module):
+    def __init__(self) -> None:
         """
         patch_size: 16 or 32
         encoder_blocks: 4
         """
-        super(VITBackbone, self).__init__()
+        super(Model, self).__init__()
+        patch_size: int = 32
+        encoder_blocks: int = 5
         h, w = 224, 224
         c, p, d = 1, patch_size, 197 if patch_size == 16 else 50
         n = h * w // (p * p)
@@ -104,13 +101,10 @@ class VITBackbone(Module):
 
 
 class VITPredictor(Module):
-    def __init__(
-        self,
-        n_classes,
-        hdims: int = 512,
-        patch_size: int = 32,
-    ) -> None:
+    def __init__(self, n_classes: int) -> None:
         super(VITPredictor, self).__init__()
+        hdims: int = 512
+        patch_size: int = 32
         d = 197 if patch_size == 16 else 50
         self.regMLP = Sequential(
             BatchNorm1d(d),
@@ -125,34 +119,4 @@ class VITPredictor(Module):
         x = x[:, 0, :]
         x = torch.squeeze(x, 1)
         x = self.regMLP(x)
-        return x
-
-
-class VIT(Module):
-    def __init__(self, n_classes: int) -> None:
-        super(VIT, self).__init__()
-        self.backbone = VITBackbone()
-        self.predictor = VITPredictor(n_classes)
-
-    def forward(self, x):
-        x = self.backbone(x)
-        x = self.predictor(x)
-        return x
-
-
-class FineTuneVIT(Module):
-    def __init__(self, n_classes: int, pretrained_path: Optional[str]) -> None:
-        super(FineTuneVIT, self).__init__()
-        self.backbone = VITBackbone()
-        self.predictor = VITPredictor(n_classes)
-        if pretrained_path:
-            pretrained_model = VIT(301)
-            pretrained_model.load_state_dict(torch.load(pretrained_path))
-            for parameter in pretrained_model.parameters():
-                parameter.requires_grad = False
-            self.backbone = pretrained_model.backbone
-
-    def forward(self, x):
-        x = self.backbone(x)
-        x = self.predictor(x)
         return x

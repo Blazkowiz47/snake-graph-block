@@ -1,4 +1,6 @@
+from dataclasses import dataclass
 import math
+from typing import Optional
 import torch
 from torch.nn import (
     AvgPool2d,
@@ -10,6 +12,9 @@ from torch.nn import (
     ReLU,
     Sequential,
 )
+
+from models.config import Config
+from models.predictor import Predictor
 
 
 class EcaModule(Module):
@@ -67,13 +72,13 @@ class ECAResnetBlock(Module):
         return x
 
 
-class ArcVein(Module):
+class Model(Module):
     """
     Arc Vein Model.
     """
 
     def __init__(self) -> None:
-        super(ArcVein, self).__init__()
+        super(Model, self).__init__()
         img_dim, channels = 224, 3
         self.convblock1 = Sequential(
             Conv2d(channels, 64, 7, 2, 5),
@@ -125,3 +130,5 @@ class ArcVein(Module):
                 if module.bias is not None:
                     module.bias.data.zero_()
                     module.bias.requires_grad = True
+
+
